@@ -18,6 +18,8 @@ export interface HomeAssistant {
   localize?: (key: string, ...args: unknown[]) => string;
   callService?: (domain: string, service: string, data?: Record<string, unknown>) => Promise<unknown>;
   callWS?: <T = unknown>(message: Record<string, unknown>) => Promise<T>;
+  /** Registre des entités (affichage) : sert à connaître l'intégration d'un lecteur. */
+  entities?: Record<string, { platform?: string }>;
   hassUrl?: (path?: string) => string;
 }
 

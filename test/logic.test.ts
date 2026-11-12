@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupResults, kindOf, normalizeQuery, parseResults, presentKinds, SearchCache, splitArtist, supportsSearch } from '../src/logic';
+import { groupResults, kindOf, normalizeQuery, parseResults, presentKinds, SearchCache, searchTypesFor, splitArtist, supportsSearch } from '../src/logic';
 
 describe('kindOf', () => {
   it('classes connues', () => {
@@ -87,5 +87,36 @@ describe('divers', () => {
     expect(supportsSearch({ supported_features: 8322623 })).toBe(true);
     expect(supportsSearch({ supported_features: 1 })).toBe(false);
     expect(supportsSearch(undefined)).toBe(false);
+  });
+});
+
+describe('Sonos', () => {
+  it('searchTypesFor : plusieurs types pour Sonos, un seul appel ailleurs', () => {
+    expect(searchTypesFor('sonos')).toEqual(['track', 'album', 'artist', 'playlist']);
+    expect(searchTypesFor('music_assistant')).toBeUndefined();
+    expect(searchTypesFor(undefined)).toBeUndefined();
+  });
+  it('artiste d’un album lu dans l’identifiant Sonos', () => {
+    const [a, b] = parseResults([
+      { title: 'Joie de vivre', media_class: 'album', media_content_id: 'A:ALBUM/Joie%20de%20vivre/Adele' },
+      { title: 'Joie de vivre', media_class: 'album', media_content_id: 'A:ALBUM/Joie%20de%20vivre/Soolking' },
+    ]);
+    expect([a.artist, b.artist]).toEqual(['Adele', 'Soolking']);
+  });
+  it('identifiant d’album sans artiste ou mal encodé : pas d’artiste, pas d’exception', () => {
+    const [a, b] = parseResults([
+      { title: 'X', media_class: 'album', media_content_id: 'A:ALBUM/X' },
+      { title: 'Y', media_class: 'album', media_content_id: 'A:ALBUM/Y/%E0%A4%A' },
+    ]);
+    expect(a.artist).toBeUndefined();
+    expect(b.artist).toBeUndefined();
+  });
+  it('playlist : extension de fichier retirée', () => {
+    const titles = parseResults([
+      { title: '#Road trip.m3u8', media_class: 'playlist', media_content_id: 'S://nas/a.m3u8' },
+      { title: 'Soirée.PLS', media_class: 'playlist', media_content_id: 'S://nas/b.pls' },
+      { title: 'Favoris', media_class: 'playlist', media_content_id: 'library://playlist/1' },
+    ]).map(i => i.title);
+    expect(titles).toEqual(['#Road trip', 'Soirée', 'Favoris']);
   });
 });

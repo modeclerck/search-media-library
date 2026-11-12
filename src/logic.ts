@@ -41,6 +41,34 @@ export function splitArtist(title: string): { title: string; artist?: string } {
   return { artist: title.slice(0, i).trim(), title: title.slice(i + 3).trim() };
 }
 
+/**
+ * Types à demander un par un à `media_player.search_media`, selon l'intégration du
+ * lecteur. L'intégration Sonos de Home Assistant ne cherche qu'un type par appel et
+ * prend « titres » quand on n'en précise aucun : on lance donc une recherche par type.
+ * `undefined` = un seul appel sans type (Music Assistant renvoie déjà tous les types).
+ */
+export const SONOS_SEARCH_TYPES = ['track', 'album', 'artist', 'playlist'] as const;
+
+export function searchTypesFor(platform: string | undefined): readonly string[] | undefined {
+  return platform === 'sonos' ? SONOS_SEARCH_TYPES : undefined;
+}
+
+/** Sonos range l'artiste d'un album dans son identifiant : `A:ALBUM/<album>/<artiste>`. */
+function artistFromAlbumId(contentId: string): string | undefined {
+  const m = /^A:ALBUM\/[^/]*\/(.+)$/.exec(contentId);
+  if (!m) return undefined;
+  try {
+    return decodeURIComponent(m[1]).trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** « Ma liste.m3u8 » → « Ma liste » : extension de fichier de playlist retirée. */
+function cleanPlaylistTitle(title: string): string {
+  return title.replace(/\.(m3u8?|pls|wpl|xspf)$/i, '').trim() || title;
+}
+
 /** Résultats bruts de `media_player.search_media` → éléments d'affichage. */
 export function parseResults(raw: unknown): SearchItem[] {
   if (!Array.isArray(raw)) return [];
@@ -54,13 +82,17 @@ export function parseResults(raw: unknown): SearchItem[] {
     if (!contentId || !rawTitle || seen.has(contentId)) continue;
     seen.add(contentId);
     const kind = kindOf(o.media_class, contentId);
-    const split = kind === 'track' || kind === 'album' ? splitArtist(rawTitle) : { title: rawTitle };
+    const split: { title: string; artist?: string } =
+      kind === 'track' || kind === 'album' ? splitArtist(rawTitle)
+        : kind === 'playlist' ? { title: cleanPlaylistTitle(rawTitle) }
+          : { title: rawTitle };
+    const artist = split.artist ?? (kind === 'album' ? artistFromAlbumId(contentId) : undefined);
     items.push({
       contentId,
       contentType: typeof o.media_content_type === 'string' && o.media_content_type ? o.media_content_type : 'music',
       kind,
       title: split.title,
-      artist: 'artist' in split ? split.artist : undefined,
+      artist,
       thumbnail: typeof o.thumbnail === 'string' && o.thumbnail ? o.thumbnail : undefined,
       canPlay: o.can_play !== false,
     });

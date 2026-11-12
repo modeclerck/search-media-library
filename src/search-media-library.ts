@@ -16,7 +16,7 @@ import { icon } from './shared/components';
 import { isUnavailable, registerCustomCard, type HomeAssistant } from './shared/ha-types';
 import { makeLocalizer } from './shared/localize';
 import {
-  groupResults, normalizeQuery, parseResults, presentKinds, SearchCache, supportsSearch,
+  groupResults, normalizeQuery, parseResults, presentKinds, SearchCache, searchTypesFor, supportsSearch,
   type Enqueue, type Kind, type SearchItem,
 } from './logic';
 import { TRANSLATIONS } from './translations';
@@ -201,17 +201,33 @@ export class SearchMediaLibrary extends LitElement {
   private async search(q: string, seq: number): Promise<void> {
     const entity = this._config?.entity;
     if (!entity || !this.hass?.callWS) return;
-    try {
-      const res = await this.hass.callWS<{ response?: Record<string, { result?: unknown }> }>({
+    const hass = this.hass;
+    const call = async (type?: string): Promise<unknown[]> => {
+      const res = await hass.callWS!<{ response?: Record<string, { result?: unknown }> }>({
         type: 'call_service',
         domain: 'media_player',
         service: 'search_media',
         target: { entity_id: entity },
-        service_data: { search_query: q },
+        service_data: { search_query: q, ...(type ? { media_content_type: type } : {}) },
         return_response: true,
       });
+      const result = res?.response?.[entity]?.result;
+      return Array.isArray(result) ? result : [];
+    };
+    try {
+      const types = searchTypesFor(hass.entities?.[entity]?.platform);
+      let raw: unknown[];
+      if (types) {
+        // Une recherche par type, en parallèle ; un type qui échoue n'empêche pas les autres.
+        const settled = await Promise.allSettled(types.map(t => call(t)));
+        const ok = settled.filter((s): s is PromiseFulfilledResult<unknown[]> => s.status === 'fulfilled');
+        if (!ok.length) throw (settled[0] as PromiseRejectedResult).reason;
+        raw = ok.flatMap(s => s.value);
+      } else {
+        raw = await call();
+      }
       if (seq !== this.seq) return;
-      const items = parseResults(res?.response?.[entity]?.result);
+      const items = parseResults(raw);
       this.cache.set(q, items);
       this._items = items;
       this._status = 'done';

@@ -7,12 +7,13 @@ import type { HomeAssistant } from '../src/shared/ha-types';
 const PLAYER = 'media_player.demo';
 const row = (title: string, cls: string, id: string) => ({ title, media_class: cls, media_content_id: id, media_content_type: 'music', can_play: true, thumbnail: null });
 
-async function setup(opts: { features?: number; state?: string; config?: Record<string, unknown> } = {}) {
+async function setup(opts: { features?: number; state?: string; config?: Record<string, unknown>; platform?: string } = {}) {
   const callWS = vi.fn();
   const callService = vi.fn().mockResolvedValue(undefined);
   const hass = {
     language: 'fr', locale: { language: 'fr' },
     states: { [PLAYER]: { entity_id: PLAYER, state: opts.state ?? 'idle', attributes: { supported_features: opts.features ?? 8322623 } } },
+    entities: opts.platform ? { [PLAYER]: { platform: opts.platform } } : {},
     callWS, callService,
   } as unknown as HomeAssistant;
   const el = document.createElement('search-media-library') as SearchMediaLibrary;
@@ -223,6 +224,55 @@ describe('search-media-library', () => {
     expect(el.shadowRoot!.querySelector('ha-spinner')).not.toBeNull();
     await vi.advanceTimersByTimeAsync(400); await flush(el); await el.updateComplete;
     expect(el.shadowRoot!.querySelector('ha-spinner')).toBeNull();
+    expect(el.shadowRoot!.querySelector('ha-alert[alert-type="error"]')).not.toBeNull();
+  });
+
+  it('Music Assistant et autres : un seul appel, sans type', async () => {
+    const { el, callWS } = await setup({ platform: 'music_assistant' });
+    callWS.mockResolvedValue(response(row('Queen', 'artist', 'library://artist/1')));
+    await type(el, 'queen');
+    await vi.advanceTimersByTimeAsync(400); await flush(el);
+    expect(callWS).toHaveBeenCalledTimes(1);
+    expect(callWS.mock.calls[0][0].service_data).toEqual({ search_query: 'queen' });
+  });
+
+  it('Sonos : une recherche par type, en parallèle, résultats regroupés', async () => {
+    const { el, callWS } = await setup({ platform: 'sonos' });
+    callWS.mockImplementation(async (msg: { service_data: { media_content_type: string } }) => {
+      const t = msg.service_data.media_content_type;
+      if (t === 'track') return response(row('Love', 'track', 'x-file-cifs://nas/music/love.flac'));
+      if (t === 'album') return response(row('Joie de vivre', 'album', 'A:ALBUM/Joie%20de%20vivre/Adele'));
+      if (t === 'artist') return response(row('Adele', 'artist', 'A:ALBUMARTIST/Adele'));
+      return response(row('Road trip.m3u8', 'playlist', 'S://nas/music/road-trip.m3u8'));
+    });
+    await type(el, 'love');
+    await vi.advanceTimersByTimeAsync(400); await flush(el); await flush(el);
+    expect(callWS.mock.calls.map(c => c[0].service_data.media_content_type).sort()).toEqual(['album', 'artist', 'playlist', 'track']);
+    expect([...el.shadowRoot!.querySelectorAll('h3')].map(h => h.textContent)).toEqual(['Artistes', 'Albums', 'Titres', 'Playlists']);
+    const subs = [...el.shadowRoot!.querySelectorAll('.row')].map(r => `${r.querySelector('.title')!.textContent} / ${r.querySelector('.sub')!.textContent}`);
+    expect(subs).toContain('Joie de vivre / Adele · Album');
+    expect(subs).toContain('Road trip / Playlist');
+  });
+
+  it('Sonos : un type en échec n’empêche pas les autres', async () => {
+    const { el, callWS } = await setup({ platform: 'sonos' });
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    callWS.mockImplementation(async (msg: { service_data: { media_content_type: string } }) => {
+      if (msg.service_data.media_content_type === 'track') return response(row('Love', 'track', 'x-file-cifs://nas/love.flac'));
+      throw new Error('type non géré');
+    });
+    await type(el, 'love');
+    await vi.advanceTimersByTimeAsync(400); await flush(el); await flush(el);
+    expect(el.shadowRoot!.querySelectorAll('.row').length).toBe(1);
+    expect(el.shadowRoot!.querySelector('ha-alert')).toBeNull();
+  });
+
+  it('Sonos : si tous les types échouent, alerte d’erreur', async () => {
+    const { el, callWS } = await setup({ platform: 'sonos' });
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    callWS.mockRejectedValue(new Error('hors ligne'));
+    await type(el, 'love');
+    await vi.advanceTimersByTimeAsync(400); await flush(el); await flush(el);
     expect(el.shadowRoot!.querySelector('ha-alert[alert-type="error"]')).not.toBeNull();
   });
 });

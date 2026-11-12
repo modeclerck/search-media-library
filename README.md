@@ -8,7 +8,7 @@ A Home Assistant dashboard card to **search your media library with live results
 
 ## Features
 
-- Search as you type (350 ms delay, 2 letters minimum), results grouped by type: radio stations, artists, albums, tracks, playlists, podcasts, audiobooks.
+- Search as you type (350 ms delay, 2 letters minimum), results grouped by type: radio stations, artists, albums, tracks, playlists, podcasts, audiobooks. Works with Music Assistant and Sonos players.
 - Filter chips by type, thumbnails, "Artist · Track" subtitles.
 - One tap plays the result on the chosen player (replace the queue, play now, play next or add to the queue).
 - Loading skeleton, spinner after 500 ms, empty state, error alert, toast when playback fails.
@@ -19,7 +19,14 @@ A Home Assistant dashboard card to **search your media library with live results
 
 - **Home Assistant 2026.4 or newer** (the card uses the `ha-input` component).
 - A media player that supports **`media_player.search_media`** (the `SEARCH_MEDIA` feature). The card tells you when the player does not support it.
-- Tested only with [Music Assistant](https://music-assistant.io/). Other integrations may return results in a different shape, or none; please open an issue with what you see.
+- Tested with [Music Assistant](https://music-assistant.io/) and [Sonos](https://www.home-assistant.io/integrations/sonos/) (see below). Other integrations may return results in a different shape, or none; please open an issue with what you see.
+
+## Supported players
+
+| Integration | What you get |
+| --- | --- |
+| Music Assistant | Everything Music Assistant finds in one search: artists, albums, tracks, playlists, radio stations, podcasts, audiobooks, with artwork and "Artist - Title" names. |
+| Sonos | The card runs one search per type (tracks, albums, artists, playlists), because the Sonos integration only searches one type at a time and defaults to tracks. Albums show their artist. Track names come **without** the artist (Home Assistant does not pass it on for Sonos). Artwork is served by the speaker itself and is missing for files without an embedded cover: the card then shows the type icon, but the browser still logs a 404 for that image. |
 
 ## Installation
 
