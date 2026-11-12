@@ -241,7 +241,7 @@ describe('search-media-library', () => {
     callWS.mockImplementation(async (msg: { service_data: { media_content_type: string } }) => {
       const t = msg.service_data.media_content_type;
       if (t === 'track') return response(row('Love', 'track', 'x-file-cifs://nas/music/love.flac'));
-      if (t === 'album') return response(row('Joie de vivre', 'album', 'A:ALBUM/Joie%20de%20vivre/Adele'));
+      if (t === 'album') return response(row('Daylight', 'album', 'A:ALBUM/Daylight/Adele'));
       if (t === 'artist') return response(row('Adele', 'artist', 'A:ALBUMARTIST/Adele'));
       return response(row('Road trip.m3u8', 'playlist', 'S://nas/music/road-trip.m3u8'));
     });
@@ -250,7 +250,7 @@ describe('search-media-library', () => {
     expect(callWS.mock.calls.map(c => c[0].service_data.media_content_type).sort()).toEqual(['album', 'artist', 'playlist', 'track']);
     expect([...el.shadowRoot!.querySelectorAll('h3')].map(h => h.textContent)).toEqual(['Artistes', 'Albums', 'Titres', 'Playlists']);
     const subs = [...el.shadowRoot!.querySelectorAll('.row')].map(r => `${r.querySelector('.title')!.textContent} / ${r.querySelector('.sub')!.textContent}`);
-    expect(subs).toContain('Joie de vivre / Adele · Album');
+    expect(subs).toContain('Daylight / Adele · Album');
     expect(subs).toContain('Road trip / Playlist');
   });
 

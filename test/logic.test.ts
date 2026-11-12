@@ -98,10 +98,10 @@ describe('Sonos', () => {
   });
   it('artiste d’un album lu dans l’identifiant Sonos', () => {
     const [a, b] = parseResults([
-      { title: 'Joie de vivre', media_class: 'album', media_content_id: 'A:ALBUM/Joie%20de%20vivre/Adele' },
-      { title: 'Joie de vivre', media_class: 'album', media_content_id: 'A:ALBUM/Joie%20de%20vivre/Soolking' },
+      { title: 'Daylight', media_class: 'album', media_content_id: 'A:ALBUM/Daylight/Adele' },
+      { title: 'Daylight', media_class: 'album', media_content_id: 'A:ALBUM/Daylight/Demo%20Band' },
     ]);
-    expect([a.artist, b.artist]).toEqual(['Adele', 'Soolking']);
+    expect([a.artist, b.artist]).toEqual(['Adele', 'Demo Band']);
   });
   it('identifiant d’album sans artiste ou mal encodé : pas d’artiste, pas d’exception', () => {
     const [a, b] = parseResults([
