@@ -20,9 +20,8 @@ import {
   type Enqueue, type Kind, type SearchItem,
 } from './logic';
 import { TRANSLATIONS } from './translations';
+import { CARD_NAME, CARD_TAG, CARD_VERSION, EDITOR_TAG, IS_DEV_BUILD } from './tags';
 import './search-media-library-editor';
-
-const CARD_TAG = 'search-media-library';
 
 export interface MediaSearchConfig {
   type: string;
@@ -115,7 +114,7 @@ export class SearchMediaLibrary extends LitElement {
   }
 
   static getConfigElement(): HTMLElement {
-    return document.createElement(`${CARD_TAG}-editor`);
+    return document.createElement(EDITOR_TAG);
   }
 
   static getStubConfig(hass?: HomeAssistant): Partial<MediaSearchConfig> {
@@ -553,10 +552,14 @@ if (!customElements.get(CARD_TAG)) {
   const lang = (navigator.language || 'en').slice(0, 2);
   registerCustomCard({
     type: CARD_TAG,
-    name: TRANSLATIONS[lang]?.['card.name'] ?? TRANSLATIONS.en['card.name'],
+    name: CARD_NAME,
     description: TRANSLATIONS[lang]?.['card.description'] ?? TRANSLATIONS.en['card.description'],
   });
-  console.info('%c SEARCH-MEDIA-LIBRARY %c 0.3.0 ', 'background:#0369a1;color:#fff;border-radius:3px 0 0 3px', 'background:#334155;color:#fff;border-radius:0 3px 3px 0');
+  console.info(
+    `%c ${CARD_TAG.toUpperCase()} %c ${CARD_VERSION} `,
+    `background:${IS_DEV_BUILD ? '#b45309' : '#0369a1'};color:#fff;border-radius:3px 0 0 3px`,
+    'background:#334155;color:#fff;border-radius:0 3px 3px 0',
+  );
 }
 
 declare global {

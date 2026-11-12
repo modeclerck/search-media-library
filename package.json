@@ -13,6 +13,7 @@
   "type": "module",
   "scripts": {
     "build": "node esbuild.config.mjs",
+    "build:dev": "node esbuild.config.mjs --dev",
     "dev": "node esbuild.config.mjs --serve",
     "test": "vitest run",
     "type-check": "tsc --noEmit",

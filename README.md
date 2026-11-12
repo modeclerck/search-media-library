@@ -72,7 +72,10 @@ The card adapts to the width it is given. **Escape** clears the field first and 
 npm install
 npm run dev      # demo page on http://127.0.0.1:8765/dev/
 npm run check    # type-check, tests, build
+npm run build:dev  # dist-dev/search-media-library-dev.js
 ```
+
+`npm run build:dev` builds the same card under another element name, `custom:search-media-library-dev` (shown as "Search media library (dev)"). Load it as an extra resource to try a change in Home Assistant next to the version installed by HACS: both can run on the same page.
 
 `dev/ha-stubs.ts` approximates the Home Assistant components for the demo page and the tests: always check the final look inside Home Assistant. The committed bundle in `dist/` must be rebuilt (`npm run build`) before each commit.
 

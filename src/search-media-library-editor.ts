@@ -5,8 +5,8 @@ import type { HomeAssistant } from './shared/ha-types';
 import { makeLocalizer } from './shared/localize';
 import { ENQUEUE_MODES, FEATURE_SEARCH_MEDIA } from './logic';
 import { TRANSLATIONS } from './translations';
+import { EDITOR_TAG } from './tags';
 
-const EDITOR_TAG = 'search-media-library-editor';
 
 const DEFAULTS: Record<string, unknown> = { enqueue: 'replace', min_chars: 2, max_height: 360, show_filters: true, autofocus: false };
 
