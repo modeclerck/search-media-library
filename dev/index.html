@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo — search-media-library</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; --primary-color: #009ac7; --primary-text-color: #141414; --secondary-text-color: #5e5e5e; --card-background-color: #fff; --secondary-background-color: #e5e5e5; --divider-color: rgba(0,0,0,.12); --ha-card-border-radius: 12px; --text-primary-color: #fff; }
+    body { margin: 0; padding: 24px; background: #fafafa; }
+    h1 { font-size: 18px; margin: 0 0 4px; }
+    p.hint { margin: 0 0 20px; font-size: 13px; color: #555; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+    h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; opacity: .65; margin: 0 0 8px; }
+    pre#log { background: #fff; padding: 10px; border-radius: 8px; font-size: 12px; min-height: 60px; white-space: pre-wrap; margin-top: 20px; }
+    .dark { background: #111318; padding: 12px; border-radius: 12px; --primary-text-color: #e1e1e1; --secondary-text-color: #9b9b9b; --card-background-color: #1c1c1c; --secondary-background-color: #2a2a2a; --divider-color: rgba(225,225,225,.14); }
+    .dark h2 { color: #e1e1e1; }
+  </style>
+</head>
+<body>
+  <h1>search-media-library — demo</h1>
+  <p class="hint">Try “love”, “queen”, “classic”, “zzz”. The Home Assistant components are approximations (<code>dev/ha-stubs.ts</code>): check the final look inside Home Assistant. Variants: <code>?mode=slow|error|unsupported|unavailable|play-error</code>, <code>?lang=fr</code>.</p>
+  <div class="grid">
+    <div><h2>Default</h2><div data-card='{}'></div></div>
+    <div><h2>Dark theme, add to queue</h2><div class="dark"><div data-card='{"enqueue":"add"}'></div></div></div>
+    <div><h2>Short list (200 px), no filters</h2><div data-card='{"max_height":200,"show_filters":false}'></div></div>
+  </div>
+  <pre id="log">Service calls…</pre>
+  <script src="../dist/search-media-library.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>
